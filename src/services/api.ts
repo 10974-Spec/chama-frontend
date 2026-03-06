@@ -2,9 +2,9 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// Use your computer's local IP address so physical devices and emulators can connect
 export const getBaseUrl = () => {
-    return 'http://192.168.100.208:5000/api';
+    // return 'http://192.168.100.208:5000/api'; // local dev
+    return 'https://chama-backend-1cex.onrender.com/api';
 };
 
 const api = axios.create({
