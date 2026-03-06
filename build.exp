@@ -1,0 +1,10 @@
+#!/usr/bin/expect -f
+set timeout -1
+spawn npx eas-cli build -p android --profile preview
+expect {
+    "Generate a new Android Keystore?" {
+        send "Y\r"
+        exp_continue
+    }
+    eof
+}
