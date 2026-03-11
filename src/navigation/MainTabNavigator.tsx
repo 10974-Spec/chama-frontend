@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet } from 'react-native';
 import HomeFeedScreen from '../screens/main/HomeFeedScreen';
 import MyChamasScreen from '../screens/main/MyChamasScreen';
-import BrowseChamaScreen from '../screens/main/BrowseChamaScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import { useTheme } from '../theme/ThemeContext';
@@ -14,7 +13,6 @@ const Tab = createBottomTabNavigator();
 const tabIcons: Record<string, { active: string; inactive: string }> = {
     Home: { active: 'home', inactive: 'home-outline' },
     MyChamas: { active: 'people', inactive: 'people-outline' },
-    Browse: { active: 'search', inactive: 'search-outline' },
     Notifications: { active: 'notifications', inactive: 'notifications-outline' },
     Profile: { active: 'person', inactive: 'person-outline' },
 };
@@ -22,7 +20,6 @@ const tabIcons: Record<string, { active: string; inactive: string }> = {
 const tabLabels: Record<string, string> = {
     Home: 'Home',
     MyChamas: 'My Chamas',
-    Browse: 'Browse',
     Notifications: 'Alerts',
     Profile: 'Profile',
 };
@@ -47,7 +44,6 @@ export default function MainTabNavigator() {
         >
             <Tab.Screen name="Home" component={HomeFeedScreen} />
             <Tab.Screen name="MyChamas" component={MyChamasScreen} />
-            <Tab.Screen name="Browse" component={BrowseChamaScreen} />
             <Tab.Screen name="Notifications" component={NotificationsScreen} />
             <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>

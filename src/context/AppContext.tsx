@@ -57,23 +57,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             try {
                 const token = await AsyncStorage.getItem('userToken');
                 if (token) {
-                    const res = await api.get('/auth/profile');
-                    setUser({
-                        _id: res.data._id,
-                        phoneNumber: res.data.phoneNumber,
-                        name: res.data.profile?.name,
-                        avatar: res.data.profile?.avatar,
-                        trustScore: res.data.trustScore,
-                        onboardingCompleted: res.data.onboardingCompleted ?? false,
-                    });
-                    setIsAuthenticated(true);
-
-                    // Register for push notifications after successful auth recovery
-                    registerPushToken();
+                    try {
+                        const res = await api.get('/auth/profile');
+                        setUser({
+                            _id: res.data._id,
+                            phoneNumber: res.data.phoneNumber,
+                            name: res.data.profile?.name,
+                            avatar: res.data.profile?.avatar,
+                            trustScore: res.data.trustScore,
+                            onboardingCompleted: res.data.onboardingCompleted ?? false,
+                        });
+                        setIsAuthenticated(true);
+                        registerPushToken();
+                    } catch (apiError: any) {
+                        console.log('API call fetch profile failed:', apiError?.message);
+                        // If it's a 401 or 403, the token is actively rejected/expired
+                        if (apiError.response && (apiError.response.status === 401 || apiError.response.status === 403)) {
+                            console.log('Token expired/invalid, logging out');
+                            await AsyncStorage.removeItem('userToken');
+                            setIsAuthenticated(false);
+                        } else {
+                            // If it's a timeout (cold start) or 500, KEEP them logged in!
+                            console.log('Network error or cold start, retaining auth state');
+                            setIsAuthenticated(true);
+                        }
+                    }
                 }
             } catch (error) {
-                console.log('Auth check failed:', error);
-                await AsyncStorage.removeItem('userToken');
+                console.log('AsyncStorage read error:', error);
             } finally {
                 setIsLoading(false);
             }

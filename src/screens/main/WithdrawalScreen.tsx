@@ -31,8 +31,8 @@ const getFee = (amount: number, method: string) => {
 
 // ── Flow step component ────────────────────────────────────────────────────
 function FlowDiagram({ method }: { method: 'mpesa' | 'bank' }) {
-    
-    
+
+
     const steps = method === 'mpesa'
         ? [
             { icon: 'wallet-outline', label: 'Chama Wallet', sub: 'Funds reserved' },
@@ -72,8 +72,8 @@ function FlowDiagram({ method }: { method: 'mpesa' | 'bank' }) {
 
 // ── Security badge strip ───────────────────────────────────────────────────
 function SecurityBadges({ method }: { method: 'mpesa' | 'bank' }) {
-    
-    
+
+
     const badges = [
         { icon: 'shield-checkmark-outline', text: '2FA Required' },
         { icon: 'time-outline', text: method === 'bank' ? '24h Processing' : 'Instant' },
@@ -94,8 +94,8 @@ function SecurityBadges({ method }: { method: 'mpesa' | 'bank' }) {
 
 // ── Bank Logo with initials fallback ────────────────────────────────────────
 function BankLogo({ uri, name, size = 36 }: { uri: string; name: string; size?: number }) {
-    
-    
+
+
     const [failed, setFailed] = useState(false);
     const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
     if (failed) {
@@ -320,8 +320,8 @@ function SuccessOverlay({ visible, data, onDone }: { visible: boolean; data: any
 // MAIN SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 export default function WithdrawalScreen({ navigation, route }: any) {
-    
-    
+
+
     const { chama } = route.params || {};
 
     const [method, setMethod] = useState<'mpesa' | 'bank'>('mpesa');
@@ -339,6 +339,8 @@ export default function WithdrawalScreen({ navigation, route }: any) {
     // Common
     const [amount, setAmount] = useState('');
     const [loadingBanks, setLoadingBanks] = useState(false);
+    const [recentWithdrawals, setRecentWithdrawals] = useState<any[]>([]);
+    const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
 
     // OTP
     const [showOtp, setShowOtp] = useState(false);
@@ -354,7 +356,7 @@ export default function WithdrawalScreen({ navigation, route }: any) {
     const fee = getFee(numAmount, method);
     const total = numAmount - fee;
 
-    // Load banks once
+    // Load banks and withdrawals once
     useEffect(() => {
         const load = async () => {
             setLoadingBanks(true);
@@ -367,8 +369,22 @@ export default function WithdrawalScreen({ navigation, route }: any) {
                 setLoadingBanks(false);
             }
         };
+        const loadWithdrawals = async () => {
+            if (!chama?._id) return;
+            setLoadingWithdrawals(true);
+            try {
+                const res = await api.get(`/transactions/chama/${chama._id}`);
+                const txs = (res.data || []).filter((tx: any) => tx.type === 'withdrawal');
+                setRecentWithdrawals(txs.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 5));
+            } catch {
+                setRecentWithdrawals([]);
+            } finally {
+                setLoadingWithdrawals(false);
+            }
+        };
         load();
-    }, []);
+        loadWithdrawals();
+    }, [chama?._id]);
 
     const handleRequestOtp = async () => {
         // Validate first
@@ -600,27 +616,43 @@ export default function WithdrawalScreen({ navigation, route }: any) {
                     </View>
                 )}
 
-                {/* ── Fee schedule table ── */}
+                {/* ── Recent Withdrawals ── */}
                 <View style={styles.section}>
                     <TouchableOpacity
                         style={styles.feeTableToggle}
-                        onPress={() => { }} // could expand
+                        disabled={true}
                     >
-                        <Ionicons name="list-outline" size={15} color={GREEN} />
-                        <Text style={styles.feeTableToggleText}>M-Pesa Fee Schedule</Text>
+                        <Ionicons name="time-outline" size={15} color={GREEN} />
+                        <Text style={styles.feeTableToggleText}>Recent Withdrawals</Text>
                     </TouchableOpacity>
-                    <View style={styles.feeTable}>
-                        <View style={styles.feeTableHeader}>
-                            <Text style={styles.feeTableHead}>Amount (KSh)</Text>
-                            <Text style={styles.feeTableHead}>Fee (KSh)</Text>
+
+                    {loadingWithdrawals ? (
+                        <View style={{ padding: 20, alignItems: 'center' }}>
+                            <ActivityIndicator color={GREEN} />
                         </View>
-                        {MPESA_FEES.map((row, i) => (
-                            <View key={i} style={[styles.feeTableRow, i % 2 === 0 && styles.feeTableRowAlt]}>
-                                <Text style={styles.feeTableCell}>Up to {row.max.toLocaleString()}</Text>
-                                <Text style={styles.feeTableCell}>{row.fee}</Text>
+                    ) : recentWithdrawals.length === 0 ? (
+                        <View style={{ padding: 20, alignItems: 'center' }}>
+                            <Ionicons name="wallet-outline" size={32} color="#E0E0E0" style={{ marginBottom: 8 }} />
+                            <Text style={{ textAlign: 'center', color: '#9E9E9E' }}>No recent withdrawals found.</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.feeTable}>
+                            <View style={styles.feeTableHeader}>
+                                <Text style={styles.feeTableHead}>Date</Text>
+                                <Text style={styles.feeTableHead}>Amount (KSh)</Text>
                             </View>
-                        ))}
-                    </View>
+                            {recentWithdrawals.map((tx, i) => (
+                                <View key={tx._id || i} style={[styles.feeTableRow, i % 2 === 0 && styles.feeTableRowAlt]}>
+                                    <Text style={styles.feeTableCell}>
+                                        {new Date(tx.timestamp).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}
+                                    </Text>
+                                    <Text style={[styles.feeTableCell, { fontWeight: '700' }]}>
+                                        {tx.amount.toLocaleString()}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 <View style={{ height: 120 }} />

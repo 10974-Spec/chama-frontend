@@ -194,7 +194,7 @@ export default function ChamaWalletTab() {
                         </View>
 
                         <Text style={styles.modalDesc}>
-                            Enter the amount you wish to withdraw and the receiving M-Pesa phone number. This action is B2C instantaneous.
+                            Enter the amount you wish to withdraw and the receiving M-Pesa phone number. The funds will be sent immediately.
                         </Text>
 
                         <View style={styles.inputGroup}>

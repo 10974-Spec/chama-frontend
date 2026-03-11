@@ -18,15 +18,11 @@ const PRIMARY_GREEN = '#2A5C3F';
 const BG = '#F5F5F0';
 const WHITE = '#FFFFFF';
 
-const CHAMA = {
-    name: 'Mazingira Sacco',
-    amount: 100,
-    frequency: 'Weekly',
-};
+
 
 function FeedCard({ item, chamaId, themeColor, onCommentPress }: any) {
-    
-    
+
+
     const isApiPost = !!item._id;
     const authorName = isApiPost ? (item.userId?.profile?.name || 'User') : (item.user?.name ?? 'User');
     const authorAvatar = isApiPost ? (item.userId?.profile?.avatar || 'https://i.pravatar.cc/150') : item.user?.avatar;
@@ -166,11 +162,12 @@ function FeedCard({ item, chamaId, themeColor, onCommentPress }: any) {
 }
 
 export default function ChamaFeedTab() {
-    
-    
+
+
     const route = useRoute<any>();
-    const { chamaId } = route.params || {};
+    const { chamaId, chama } = route.params || {};
     const themeColor = '#2A5C3F';
+    const amountToPay = chama?.settings?.weeklyContribution || chama?.amount || 0;
 
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -262,8 +259,8 @@ export default function ChamaFeedTab() {
     };
 
     const openComments = (post: any) => {
-    
-    
+
+
         setSelectedPost(post);
         setModalVisible(true);
     };
@@ -355,7 +352,7 @@ export default function ChamaFeedTab() {
                             end={{ x: 1, y: 1 }}
                             style={styles.payBtn}
                         >
-                            <Text style={styles.payBtnText}>PAY KSH {CHAMA.amount}</Text>
+                            <Text style={styles.payBtnText}>PAY KSH {amountToPay}</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>

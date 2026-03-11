@@ -123,16 +123,34 @@ export default function HomeFeedScreen({ navigation }: any) {
     const [myChamaIds, setMyChamaIds] = useState<Set<string>>(new Set());
     const [unreadChamas, setUnreadChamas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [inviteCode, setInviteCode] = useState('');
+    const [joining, setJoining] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const { user } = useAppContext();
 
     const handleCreateChama = () => {
-
-
         if (!user?.name) {
             setShowProfileModal(true);
         } else {
             navigation.navigate('CreateChama');
+        }
+    };
+
+    const handleJoinChama = async () => {
+        if (!inviteCode.trim()) return;
+        setJoining(true);
+        try {
+            const res = await api.post('/chamas/join', { code: inviteCode.trim() });
+            setShowJoinModal(false);
+            setInviteCode('');
+            // Navigate straight to the Chama dashboard instead of a profile view
+            navigation.navigate('ChamaDashboard', { chama: res.data.chama });
+        } catch (error: any) {
+            console.error('Failed to join chama via code', error);
+            alert(error.response?.data?.message || 'Invalid or expired invite code');
+        } finally {
+            setJoining(false);
         }
     };
 
@@ -147,17 +165,17 @@ export default function HomeFeedScreen({ navigation }: any) {
                 const myIds = new Set<string>(myRes.data.map((c: any) => c._id));
                 setMyChamaIds(myIds);
 
-                const withMeta = allRes.data.map((c: any, i: number) => ({
+                const withMeta = allRes.data.map((c: any) => ({
                     ...c,
-                    unread: myIds.has(c._id) ? (i % 3 === 0 ? (i % 5) + 1 : 0) : 0,
-                    online: i % 2 === 0,
-                    lastActive: ['5 min', '32 min', '1 hour', '5 hour', 'Mon', 'Tue', 'Wed'][i % 7],
+                    unread: 0,
+                    online: false,
+                    lastActive: c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : '',
                 }));
                 setChamas(withMeta);
 
-                const myWithUnread = myRes.data.map((c: any, i: number) => ({
+                const myWithUnread = myRes.data.map((c: any) => ({
                     ...c,
-                    unread: i % 2 === 0 ? (i % 3) + 1 : 0
+                    unread: 0
                 })).filter((c: any) => c.unread > 0);
                 setUnreadChamas(myWithUnread);
             } catch (err) {
@@ -253,23 +271,29 @@ export default function HomeFeedScreen({ navigation }: any) {
                             </View>
                         )}
 
-                        {/* ── Section label ── */}
-                        <Text style={styles.sectionTitle}>Chamas near you</Text>
-
-                        {/* ── Chama message-style list ── */}
-                        <View style={styles.chamaList}>
-                            {filteredChamas.length > 0 ? (
-                                filteredChamas.map((item, index) => (
-                                    <ChamaRow
-                                        key={item._id}
-                                        item={item}
-                                        isLast={index === filteredChamas.length - 1}
-                                        isMember={myChamaIds.has(item._id)}
-                                    />
-                                ))
-                            ) : (
-                                <Text style={styles.emptyText}>No Chamas found.</Text>
-                            )}
+                        {/* ── Join Chama Button ── */}
+                        <View style={{ paddingHorizontal: 20, marginTop: 10 }}>
+                            <TouchableOpacity
+                                style={styles.joinBtnWrap}
+                                onPress={() => setShowJoinModal(true)}
+                                activeOpacity={0.88}
+                            >
+                                <LinearGradient
+                                    colors={['#E8F5E9', '#F0FDF4']}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 1 }}
+                                    style={styles.joinBtn}
+                                >
+                                    <View style={styles.joinBtnIcon}>
+                                        <Ionicons name="link-outline" size={24} color={PRIMARY_GREEN} />
+                                    </View>
+                                    <View style={styles.joinBtnTextWrap}>
+                                        <Text style={styles.joinBtnTitle}>Join someone's Chama</Text>
+                                        <Text style={styles.joinBtnSubtitle}>Have an invite code? Enter it here</Text>
+                                    </View>
+                                    <Ionicons name="chevron-forward" size={20} color={PRIMARY_GREEN} />
+                                </LinearGradient>
+                            </TouchableOpacity>
                         </View>
 
                         <View style={{ height: 24 }} />
@@ -366,12 +390,136 @@ export default function HomeFeedScreen({ navigation }: any) {
                     </View>
                 </TouchableOpacity>
             </Modal>
+            {/* ── Join Chama Modal ── */}
+            <Modal
+                transparent
+                visible={showJoinModal}
+                animationType="fade"
+                onRequestClose={() => setShowJoinModal(false)}
+            >
+                <TouchableOpacity
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setShowJoinModal(false)}
+                >
+                    <View style={styles.centerModalSheet}>
+                        <View style={styles.modalIconWrap}>
+                            <Ionicons name="keypad-outline" size={40} color={PRIMARY_GREEN} />
+                        </View>
+                        <Text style={styles.modalTitle}>Join a Chama</Text>
+                        <Text style={styles.centerModalSubtitle}>
+                            Enter the 6-digit invite code provided by the Chama administrator.
+                        </Text>
+
+                        <TextInput
+                            style={styles.inviteInput}
+                            placeholder="e.g. A1B2C3"
+                            placeholderTextColor="#BDBDBD"
+                            autoCapitalize="characters"
+                            value={inviteCode}
+                            onChangeText={setInviteCode}
+                        />
+
+                        <TouchableOpacity
+                            style={[styles.payBtn, { width: '100%', marginTop: 20 }]}
+                            onPress={handleJoinChama}
+                            disabled={joining}
+                        >
+                            {joining ? <ActivityIndicator color={BG_WHITE} /> : <Text style={styles.payBtnText}>Verify & Join</Text>}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.modalDismiss} onPress={() => setShowJoinModal(false)}>
+                            <Text style={styles.modalDismissText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: BG_WHITE },
+
+    /* ── Join Btn ── */
+    joinBtnWrap: {
+        borderRadius: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#E6F4EA',
+    },
+    joinBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+    },
+    joinBtnIcon: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 14,
+        shadowColor: PRIMARY_GREEN,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    joinBtnTextWrap: {
+        flex: 1,
+    },
+    joinBtnTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1A1A1A',
+        marginBottom: 2,
+    },
+    joinBtnSubtitle: {
+        fontSize: 13,
+        color: '#666',
+    },
+
+    payBtn: {
+        backgroundColor: PRIMARY_GREEN,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    payBtnText: {
+        color: BG_WHITE,
+        fontSize: 16,
+        fontWeight: '700',
+    },
+
+    centerModalSheet: {
+        backgroundColor: BG_WHITE,
+        borderRadius: 24,
+        padding: 24,
+        width: '85%',
+        alignSelf: 'center',
+        marginBottom: 'auto',
+        marginTop: 'auto',
+        alignItems: 'center',
+    },
+    centerModalSubtitle: {
+        fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 20, lineHeight: 20,
+    },
+    inviteInput: {
+        width: '100%',
+        height: 54,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: '#EBEBEB',
+        fontSize: 20,
+        fontWeight: '700',
+        textAlign: 'center',
+        letterSpacing: 4,
+        color: '#1A1A1A',
+    },
 
     /* ── Top header ── */
     topHeader: {
