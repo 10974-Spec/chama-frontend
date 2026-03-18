@@ -185,7 +185,11 @@ export default function ChamaSettingsTab({ route }: any) {
                         try {
                             setLoading(true);
                             await api.delete(`/chamas/${chamaId}`);
-                            route.params.navigation?.navigate('MainTabs', { screen: 'My Chamas' });
+                            Alert.alert(
+                                'Scheduled for Deletion',
+                                'This Chama has been locked and will be permanently deleted in 24 hours. You can restore it from the dashboard before then.',
+                                [{ text: 'OK', onPress: () => route.params.navigation?.navigate('MainTabs', { screen: 'My Chamas' }) }]
+                            );
                         } catch (err: any) {
                             console.error(err);
                             setLoading(false);
@@ -246,7 +250,7 @@ export default function ChamaSettingsTab({ route }: any) {
 
                     <Text style={[styles.settingLabel, { marginLeft: 16 }]}>Description</Text>
                     <View style={[styles.inputWrap, { height: 80, alignItems: 'flex-start' }]}>
-                        <TextInput style={[styles.input, { paddingTop: 12, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} multiline />
+                        <TextInput style={[styles.input, { flex: 1, paddingTop: 12, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} multiline />
                     </View>
                 </View>
 
@@ -340,7 +344,7 @@ export default function ChamaSettingsTab({ route }: any) {
                     </View>
                     <View style={[styles.inputWrap, { height: 80, alignItems: 'flex-start' }]}>
                         <TextInput
-                            style={[styles.input, { paddingTop: 12, textAlignVertical: 'top' }]}
+                            style={[styles.input, { flex: 1, paddingTop: 12, textAlignVertical: 'top' }]}
                             placeholder="Write your message here..."
                             multiline
                             value={broadcastMessage}
@@ -450,8 +454,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
         ...typography.body,
         color: colors.text.dark,
         paddingHorizontal: 12,
-        paddingVertical: 12,
-        height: '100%'
+        paddingVertical: 12
     },
     broadcastBtn: {
         marginHorizontal: 16,
@@ -474,7 +477,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
         borderRadius: 50,
         backgroundColor: '#E8F5E9',
         overflow: 'hidden',
-        ...shadows.sm
+        ...shadows.card
     },
     logoImg: {
         width: '100%',

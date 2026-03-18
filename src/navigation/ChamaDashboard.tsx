@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, StatusBar, TextInput, Alert } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,6 +45,29 @@ export default function ChamaDashboard({ route, navigation }: any) {
         const diff = endDate.getTime() - new Date().getTime();
         trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }
+
+    const isPendingDeletion = !!liveChama.deletionScheduledAt;
+    const [cancelName, setCancelName] = useState('');
+    const [canceling, setCanceling] = useState(false);
+
+    const handleCancelDeletion = async () => {
+        if (cancelName.trim().toLowerCase() !== liveChama.name.trim().toLowerCase()) {
+            Alert.alert('Name Mismatch', 'Please type the exact Chama name to confirm restoration.');
+            return;
+        }
+        setCanceling(true);
+        try {
+            await api.patch(`/chamas/${liveChama._id}/cancel-deletion`, { name: cancelName });
+            setLiveChama({ ...liveChama, deletionScheduledAt: null });
+            setCancelName('');
+            Alert.alert('Restored', 'The Chama has been successfully restored and the deletion was canceled.');
+        } catch (error: any) {
+            console.error(error);
+            Alert.alert('Error', error.response?.data?.message || 'Failed to cancel deletion.');
+        } finally {
+            setCanceling(false);
+        }
+    };
 
     useFocusEffect(
         useCallback(() => {
@@ -108,7 +131,44 @@ export default function ChamaDashboard({ route, navigation }: any) {
 
             </View>
 
-            {isLocked ? (
+            {isPendingDeletion ? (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#FEF2F2' }}>
+                    <Ionicons name="warning" size={64} color="#DC2626" style={{ marginBottom: 16 }} />
+                    <Text style={{ ...typography.h3, color: '#DC2626', textAlign: 'center', marginBottom: 8 }}>Pending Deletion</Text>
+
+                    {user?._id === liveChama.adminId ? (
+                        <>
+                            <Text style={{ ...typography.body, color: '#7F1D1D', textAlign: 'center', marginBottom: 24 }}>
+                                This account has been scheduled for permanent deletion and takes 24 hours to be wiped completely.
+                            </Text>
+                            <View style={{ width: '100%', backgroundColor: WHITE, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#FCA5A5' }}>
+                                <Text style={{ ...typography.bodyMedium, color: '#450a0a', marginBottom: 8 }}>To restore, type Chama name:</Text>
+                                <TextInput
+                                    style={{ borderWidth: 1, borderColor: '#FCA5A5', padding: 12, borderRadius: 8, marginBottom: 16, backgroundColor: '#FEF2F2', color: '#450a0a' }}
+                                    placeholder={liveChama.name}
+                                    placeholderTextColor="#f87171"
+                                    value={cancelName}
+                                    onChangeText={setCancelName}
+                                    autoCapitalize="none"
+                                />
+                                <TouchableOpacity
+                                    style={{ backgroundColor: '#DC2626', padding: 14, borderRadius: 8, alignItems: 'center', opacity: canceling ? 0.7 : 1 }}
+                                    onPress={handleCancelDeletion}
+                                    disabled={canceling}
+                                >
+                                    <Text style={{ color: WHITE, fontWeight: '700' }}>
+                                        {canceling ? 'Restoring...' : 'Cancel Deletion'}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    ) : (
+                        <Text style={{ ...typography.body, color: '#7F1D1D', textAlign: 'center', marginBottom: 24 }}>
+                            This Chama is currently unavailable because it has been scheduled for deletion by the administrator.
+                        </Text>
+                    )}
+                </View>
+            ) : isLocked ? (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#FAFAFA' }}>
                     <Ionicons name="lock-closed" size={64} color={colors.text.placeholder} style={{ marginBottom: 16 }} />
                     <Text style={{ ...typography.h3, color: colors.text.dark, textAlign: 'center', marginBottom: 8 }}>Chama Locked</Text>
