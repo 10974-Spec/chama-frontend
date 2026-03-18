@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Alert, Image, DeviceEventEmitter } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, typography, radii, shadows } from '../../theme';
@@ -132,7 +132,7 @@ export default function ChamaSettingsTab({ route }: any) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.patch(`/chamas/${chamaId}/settings`, {
+            const res = await api.patch(`/chamas/${chamaId}/settings`, {
                 name,
                 description,
                 logo: logoUrl,
@@ -141,6 +141,7 @@ export default function ChamaSettingsTab({ route }: any) {
                 weeklyContribution: Number(weeklyContribution),
                 payoutFrequency
             });
+            DeviceEventEmitter.emit('CHAMA_UPDATED', res.data);
             showAlert('success', 'Settings Saved', 'Settings updated successfully.');
         } catch (error: any) {
             console.error(error);

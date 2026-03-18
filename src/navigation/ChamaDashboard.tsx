@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, StatusBar, TextInput, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ImageBackground, StatusBar, TextInput, Alert, DeviceEventEmitter } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +33,7 @@ export default function ChamaDashboard({ route, navigation }: any) {
     const { user } = useAppContext();
     const [payVisible, setPayVisible] = useState(false);
 
-    const themeColor = PRIMARY_GREEN; // Universal green gradient theme used system-wide
+    const themeColor = liveChama.settings?.themeColor || PRIMARY_GREEN;
 
     const isLocked = liveChama.subscriptionStatus === 'locked';
     const isTrial = liveChama.subscriptionStatus === 'trial' || !liveChama.subscriptionStatus;
@@ -68,6 +68,15 @@ export default function ChamaDashboard({ route, navigation }: any) {
             setCanceling(false);
         }
     };
+
+    useEffect(() => {
+        const sub = DeviceEventEmitter.addListener('CHAMA_UPDATED', (updatedChama) => {
+            if (updatedChama._id === liveChama._id) {
+                setLiveChama(updatedChama);
+            }
+        });
+        return () => sub.remove();
+    }, [liveChama._id]);
 
     useFocusEffect(
         useCallback(() => {
