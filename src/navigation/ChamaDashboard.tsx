@@ -35,6 +35,16 @@ export default function ChamaDashboard({ route, navigation }: any) {
 
     const themeColor = PRIMARY_GREEN; // Universal green gradient theme used system-wide
 
+    const isLocked = liveChama.subscriptionStatus === 'locked';
+    const isTrial = liveChama.subscriptionStatus === 'trial';
+
+    // Calculate trial days left
+    let trialDaysLeft = 0;
+    if (isTrial && liveChama.trialEndsAt) {
+        const diff = new Date(liveChama.trialEndsAt).getTime() - new Date().getTime();
+        trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    }
+
     useFocusEffect(
         useCallback(() => {
             const fetchChama = async () => {
@@ -84,19 +94,38 @@ export default function ChamaDashboard({ route, navigation }: any) {
                 <Image source={{ uri: liveChama.logo }} style={[styles.profileAvatar, { borderColor: themeColor }]} />
                 <Text style={styles.profileTitle}>{liveChama.name}</Text>
                 <Text style={styles.profileSubtitle}>Ksh {liveChama.settings?.weeklyContribution || liveChama.amount || 0} · {liveChama.settings?.payoutFrequency || liveChama.frequency || 'Weekly'}</Text>
+
+                {isTrial && (
+                    <View style={styles.trialBanner}>
+                        <Text style={styles.trialText}>
+                            Trial ends in {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}.
+                        </Text>
+                        {user?._id === liveChama.adminId && (
+                            <TouchableOpacity onPress={() => setPayVisible(true)}>
+                                <Text style={styles.upgradeText}>Upgrade</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
             </View>
 
-            {liveChama.isActive === false ? (
+            {isLocked ? (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#FAFAFA' }}>
                     <Ionicons name="lock-closed" size={64} color={colors.text.placeholder} style={{ marginBottom: 16 }} />
-                    <Text style={{ ...typography.h3, color: colors.text.dark, textAlign: 'center', marginBottom: 8 }}>Chama Pending Activation</Text>
-                    <Text style={{ ...typography.body, color: colors.text.medium, textAlign: 'center', marginBottom: 24 }}>
-                        This Chama has not been activated yet. The onboarding fee of Ksh 500 is pending.
-                    </Text>
-                    {user?._id === liveChama.adminId && (
-                        <TouchableOpacity style={[styles.payBtn, { backgroundColor: themeColor }]} onPress={() => setPayVisible(true)}>
-                            <Text style={styles.payBtnText}>Pay Ksh 500 to Activate</Text>
-                        </TouchableOpacity>
+                    <Text style={{ ...typography.h3, color: colors.text.dark, textAlign: 'center', marginBottom: 8 }}>Chama Locked</Text>
+                    {user?._id === liveChama.adminId ? (
+                        <>
+                            <Text style={{ ...typography.body, color: colors.text.medium, textAlign: 'center', marginBottom: 24 }}>
+                                Your 7-day free trial has expired. Please pay Ksh 500 to continue using the chama and unlock access for your members.
+                            </Text>
+                            <TouchableOpacity style={[styles.payBtn, { backgroundColor: themeColor }]} onPress={() => setPayVisible(true)}>
+                                <Text style={styles.payBtnText}>Pay Ksh 500 to Unlock</Text>
+                            </TouchableOpacity>
+                        </>
+                    ) : (
+                        <Text style={{ ...typography.body, color: colors.text.medium, textAlign: 'center', marginBottom: 24 }}>
+                            This Chama is currently locked. Please contact your admin to renew the subscription.
+                        </Text>
                     )}
                 </View>
             ) : (
@@ -128,10 +157,10 @@ export default function ChamaDashboard({ route, navigation }: any) {
                 onClose={() => setPayVisible(false)}
                 amount={500}
                 chamaId={liveChama._id}
-                type="registration"
+                type="subscription"
                 onSuccess={() => {
                     setPayVisible(false);
-                    setLiveChama({ ...liveChama, isActive: true });
+                    setLiveChama({ ...liveChama, subscriptionStatus: 'active', isActive: true });
                 }}
             />
         </View>
@@ -180,4 +209,27 @@ const makeStyles = (colors: any) => StyleSheet.create({
         paddingHorizontal: 12, paddingVertical: 7,
     },
     withdrawNavBtnText: { fontSize: 12, fontWeight: '700', color: WHITE },
+    trialBanner: {
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF8E1',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#FFECB3'
+    },
+    trialText: {
+        fontSize: 12,
+        color: '#F57F17',
+        fontWeight: '600',
+        marginRight: 6
+    },
+    upgradeText: {
+        fontSize: 12,
+        color: '#2A5C3F',
+        fontWeight: '800',
+        textDecorationLine: 'underline'
+    }
 });

@@ -10,7 +10,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, typography, shadows, radii } from '../../theme';
 import api, { getBaseUrl } from '../../services/api';
-import { PaymentModal } from '../../components/ui/PaymentModal';
 import { useCustomAlert } from '../../components/ui/CustomAlert';
 
 const PRIMARY_GREEN = '#2A5C3F';
@@ -33,7 +32,6 @@ export default function CreateChamaScreen({ navigation }: any) {
     const [logoUrl, setLogoUrl] = useState('');
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [createdChamaId, setCreatedChamaId] = useState<string | null>(null);
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -79,7 +77,9 @@ export default function CreateChamaScreen({ navigation }: any) {
                 visibility: isPublic ? 'public' : 'private',
                 maxMembers
             });
-            setCreatedChamaId(res.data._id);
+            // 7-day free trial — navigate straight to chama home
+            showAlert('success', '🎉 Chama Created!', 'Your chama is live! You have a 7-day free trial.');
+            setTimeout(() => navigation.navigate('ChamaHome', { chamaId: res.data._id }), 1800);
         } catch (err: any) {
             showAlert('error', 'Error', err?.response?.data?.message || 'Failed to create chama');
         } finally {
@@ -439,16 +439,6 @@ export default function CreateChamaScreen({ navigation }: any) {
                     <Text style={styles.footerTags}>CHAMA APP © 2026. ALL RIGHTS RESERVED.</Text>
                 </View>
 
-                {createdChamaId && (
-                    <PaymentModal
-                        visible={!!createdChamaId}
-                        onClose={() => navigation.goBack()}
-                        amount={500}
-                        chamaId={createdChamaId}
-                        type="registration"
-                        onSuccess={() => navigation.goBack()}
-                    />
-                )}
             </View>
             <AlertComponent />
         </>

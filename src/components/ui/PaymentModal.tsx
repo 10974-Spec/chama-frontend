@@ -10,7 +10,7 @@ interface PaymentModalProps {
     onClose: () => void;
     amount: number;
     chamaId: string;
-    type?: 'contribution' | 'registration';
+    type?: 'contribution' | 'registration' | 'subscription';
     onSuccess?: () => void;
 }
 
@@ -20,7 +20,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ visible, onClose, am
     const [loading, setLoading] = useState(false);
 
     let fee = 0;
-    if (type === 'registration') {
+    if (type === 'registration' || type === 'subscription') {
         fee = 0;
     } else {
         if (amount <= 500) fee = 10;

@@ -18,7 +18,7 @@ const PRIMARY_GREEN_LIGHT = '#3A7D54';
 export default function OTPVerificationScreen({ route, navigation }: any) {
     const { colors } = useTheme();
     const styles = makeStyles(colors);
-    const { phoneNumber } = route.params || {};
+    const { phoneNumber, autoOtp } = route.params || {};
     const { login } = useApp();
 
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -28,6 +28,13 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
     const inputs = useRef<TextInput[]>([]);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
+
+    // Auto-fill OTP if provided (while SMS delivery is being fixed)
+    useEffect(() => {
+        if (autoOtp && autoOtp.length === 6) {
+            setOtp(autoOtp.split(''));
+        }
+    }, [autoOtp]);
 
     useEffect(() => {
         if (!phoneNumber) {
@@ -45,8 +52,6 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
     }, []);
 
     const handleChange = (val: string, idx: number) => {
-        const { colors } = useTheme();
-        const styles = makeStyles(colors);
         const next = [...otp];
         next[idx] = val;
         setOtp(next);
@@ -76,9 +81,13 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
 
     const handleResend = async () => {
         try {
-            await api.post('/auth/send-otp', { phoneNumber });
+            const res = await api.post('/auth/send-otp', { phoneNumber });
             setTimer(30);
-            Alert.alert('OTP Sent', 'A new code has been sent to your phone.');
+            if (res.data.otp) {
+                setOtp(res.data.otp.split(''));
+            } else {
+                Alert.alert('OTP Sent', 'A new code has been sent to your phone.');
+            }
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.message || 'Failed to resend OTP');
         }

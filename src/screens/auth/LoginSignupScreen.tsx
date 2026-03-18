@@ -58,7 +58,7 @@ export default function LoginSignupScreen({ navigation }: any) {
             });
         } catch (error: any) {
             if (error.response?.status === 403 && error.response?.data?.requireOtp) {
-                navigation.navigate('OTPVerification', { phoneNumber: identifier });
+                navigation.navigate('OTPVerification', { phoneNumber: identifier, autoOtp: error.response?.data?.otp });
             } else {
                 Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
             }
@@ -76,7 +76,7 @@ export default function LoginSignupScreen({ navigation }: any) {
         try {
             const res = await api.post('/auth/register', { phoneNumber: identifier, name, password });
             if (res.status === 201 && res.data.requireOtp) {
-                navigation.navigate('OTPVerification', { phoneNumber: identifier });
+                navigation.navigate('OTPVerification', { phoneNumber: identifier, autoOtp: res.data.otp });
             }
         } catch (error: any) {
             Alert.alert('Registration Failed', error.response?.data?.message || 'Something went wrong');
