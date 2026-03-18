@@ -28,6 +28,7 @@ interface AppContextType {
     isLoading: boolean;
     login: (token: string, userData: User) => Promise<void>;
     logout: () => Promise<void>;
+    updateUser: (userData: Partial<User>) => void;
     activeChama: string | null;
     setActiveChama: (id: string | null) => void;
 }
@@ -108,8 +109,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setActiveChama(null);
     };
 
+    const updateUser = (userData: Partial<User>) => {
+        if (user) {
+            setUser({ ...user, ...userData, profile: { ...user.profile, ...userData.profile } });
+        }
+    };
+
     return (
-        <AppContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, activeChama, setActiveChama }}>
+        <AppContext.Provider value={{ user, isAuthenticated, isLoading, login, logout, updateUser, activeChama, setActiveChama }}>
             {children}
         </AppContext.Provider>
     );

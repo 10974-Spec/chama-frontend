@@ -19,7 +19,7 @@ const PRIMARY_GREEN_LIGHT = '#3A7D54';
 export default function EditProfileScreen({ navigation }: any) {
     const { colors } = useTheme();
     const styles = makeStyles(colors);
-    const { user, login } = useApp();
+    const { user, login, updateUser } = useApp();
     const [name, setName] = useState((user as any)?.profile?.name || '');
     const [phone, setPhone] = useState((user as any)?.phone || '');
     const [idNumber, setIdNumber] = useState('');
@@ -71,6 +71,12 @@ export default function EditProfileScreen({ navigation }: any) {
     const handleSave = async () => {
         try {
             await api.put('/auth/profile', { name, avatar: avatarUrl, idPhoto: idPhotoUrl, email, phone, idNumber });
+
+            // Update global app state efficiently so the UI reflects changes instantly
+            updateUser({
+                profile: { ...user?.profile, name, avatar: avatarUrl }
+            });
+
             alert('Profile updated successfully!');
             navigation.goBack();
         } catch (error) {
