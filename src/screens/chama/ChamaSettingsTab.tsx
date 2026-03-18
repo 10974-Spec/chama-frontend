@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
-import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, TouchableOpacity, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, typography, radii, shadows } from '../../theme';
-import api from '../../services/api';
+import api, { getBaseUrl } from '../../services/api';
 import { useAppContext } from '../../context/AppContext';
 import { useCustomAlert } from '../../components/ui/CustomAlert';
 
@@ -42,8 +43,16 @@ export default function ChamaSettingsTab({ route }: any) {
     const [saving, setSaving] = useState(false);
     const { showAlert, AlertComponent } = useCustomAlert();
 
-    // Form fields
+    // Basic Details
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [logoUrl, setLogoUrl] = useState('');
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+
+    // Financial Form fields
     const [autoPayoutEnabled, setAutoPayoutEnabled] = useState(false);
+    const [weeklyContribution, setWeeklyContribution] = useState('');
+    const [payoutFrequency, setPayoutFrequency] = useState('weekly');
     const [themeColor, setThemeColor] = useState('#2A5C3F');
 
     // Broadcast
@@ -62,7 +71,12 @@ export default function ChamaSettingsTab({ route }: any) {
                 const found = res.data.find((c: any) => c._id === chamaId);
                 if (found) {
                     setChama(found);
+                    setName(found.name || '');
+                    setDescription(found.description || '');
+                    setLogoUrl(found.logo || '');
                     setAutoPayoutEnabled(found.settings?.autoPayoutEnabled || false);
+                    setWeeklyContribution(found.settings?.weeklyContribution?.toString() || '');
+                    setPayoutFrequency(found.settings?.payoutFrequency || 'weekly');
                     setThemeColor(found.settings?.themeColor || '#2A5C3F');
                 }
             } catch (err) {
@@ -74,12 +88,58 @@ export default function ChamaSettingsTab({ route }: any) {
         fetchChama();
     }, [chamaId]);
 
+    const pickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            uploadImage(result.assets[0].uri);
+        }
+    };
+
+    const uploadImage = async (uri: string) => {
+        setUploadingLogo(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', {
+                uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+                type: 'image/jpeg',
+                name: `chama-logo-${Date.now()}.jpg`
+            } as any);
+
+            const res = await api.post('/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            const returnedUrl = res.data.url;
+            const fullUrl = returnedUrl.startsWith('http')
+                ? returnedUrl
+                : getBaseUrl().replace('/api', '') + returnedUrl;
+
+            setLogoUrl(fullUrl);
+        } catch (error) {
+            console.error('Failed to upload logo', error);
+            showAlert('error', 'Upload Failed', 'Could not upload the logo image.');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
             await api.patch(`/chamas/${chamaId}/settings`, {
+                name,
+                description,
+                logo: logoUrl,
                 autoPayoutEnabled,
-                themeColor
+                themeColor,
+                weeklyContribution: Number(weeklyContribution),
+                payoutFrequency
             });
             showAlert('success', 'Settings Saved', 'Settings updated successfully.');
         } catch (error: any) {
@@ -112,6 +172,31 @@ export default function ChamaSettingsTab({ route }: any) {
         }
     };
 
+    const handleDelete = async () => {
+        Alert.alert(
+            'Delete Chama',
+            'Are you absolutely sure you want to permanently delete this Chama? This action cannot be undone and will destroy all messages, memberships, and records.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete Permanently',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            await api.delete(`/chamas/${chamaId}`);
+                            route.params.navigation?.navigate('MainTabs', { screen: 'My Chamas' });
+                        } catch (err: any) {
+                            console.error(err);
+                            setLoading(false);
+                            showAlert('error', 'Delete Failed', err.response?.data?.message || 'Could not delete Chama.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -134,10 +219,58 @@ export default function ChamaSettingsTab({ route }: any) {
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+
+                {/* ── Basic Details ── */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Chama Details</Text>
+
+                    <View style={styles.logoSection}>
+                        <TouchableOpacity style={styles.logoWrap} onPress={pickImage} disabled={uploadingLogo} activeOpacity={0.8}>
+                            {logoUrl ? (
+                                <Image source={{ uri: logoUrl }} style={styles.logoImg} />
+                            ) : (
+                                <View style={styles.logoPlaceholder}>
+                                    <Ionicons name="camera" size={36} color="#A5D6A7" />
+                                </View>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.uploadBtn} onPress={pickImage} disabled={uploadingLogo}>
+                            {uploadingLogo ? <ActivityIndicator color={themeColor} size="small" /> : <Text style={[styles.uploadText, { color: themeColor }]}>Change Logo</Text>}
+                        </TouchableOpacity>
+                    </View>
+
+                    <Text style={[styles.settingLabel, { marginLeft: 16, marginTop: 4 }]}>Chama Name</Text>
+                    <View style={styles.inputWrap}>
+                        <TextInput style={styles.input} value={name} onChangeText={setName} />
+                    </View>
+
+                    <Text style={[styles.settingLabel, { marginLeft: 16 }]}>Description</Text>
+                    <View style={[styles.inputWrap, { height: 80, alignItems: 'flex-start' }]}>
+                        <TextInput style={[styles.input, { paddingTop: 12, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} multiline />
+                    </View>
+                </View>
+
+                {/* ── Financial Toggles ── */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Financial Toggles</Text>
 
-                    <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
+                    <Text style={[styles.settingLabel, { marginLeft: 16, marginTop: 4 }]}>Contribution Amount (KSh)</Text>
+                    <View style={styles.inputWrap}>
+                        <TextInput style={styles.input} value={weeklyContribution} onChangeText={setWeeklyContribution} keyboardType="numeric" />
+                    </View>
+
+                    <Text style={[styles.settingLabel, { marginLeft: 16 }]}>Frequency</Text>
+                    <View style={styles.inputWrap}>
+                        <TextInput
+                            style={styles.input}
+                            value={payoutFrequency}
+                            onChangeText={setPayoutFrequency}
+                            placeholder="e.g. weekly, biweekly, monthly"
+                            autoCapitalize="none"
+                        />
+                    </View>
+
+                    <View style={[styles.settingRow, { borderBottomWidth: 0, marginTop: 8 }]}>
                         <View style={styles.settingInfo}>
                             <Text style={styles.settingLabel}>Automatic Payouts</Text>
                             <Text style={styles.settingDesc}>
@@ -228,6 +361,21 @@ export default function ChamaSettingsTab({ route }: any) {
                     </TouchableOpacity>
                 </View>
 
+                {/* ── Danger Zone ── */}
+                <View style={[styles.section, { marginTop: 24, borderColor: '#FEE2E2', borderWidth: 1 }]}>
+                    <Text style={[styles.sectionTitle, { color: '#DC2626' }]}>Danger Zone</Text>
+                    <Text style={[styles.settingDesc, { marginLeft: 16, marginBottom: 16, marginRight: 16 }]}>
+                        Permanently delete this Chama and all its data. This cannot be undone.
+                    </Text>
+
+                    <TouchableOpacity
+                        style={[styles.broadcastBtn, { backgroundColor: '#FEF2F2', borderColor: '#DC2626' }]}
+                        onPress={handleDelete}
+                    >
+                        <Text style={[styles.broadcastText, { color: '#DC2626' }]}>Delete Chama</Text>
+                    </TouchableOpacity>
+                </View>
+
             </ScrollView>
             <AlertComponent />
         </KeyboardAvoidingView>
@@ -315,5 +463,36 @@ const makeStyles = (colors: any) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    broadcastText: { ...typography.button, color: colors.primary }
+    broadcastText: { ...typography.button, color: colors.primary },
+    logoSection: {
+        alignItems: 'center',
+        marginVertical: 16,
+    },
+    logoWrap: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#E8F5E9',
+        overflow: 'hidden',
+        ...shadows.sm
+    },
+    logoImg: {
+        width: '100%',
+        height: '100%',
+    },
+    logoPlaceholder: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    uploadBtn: {
+        marginTop: 12,
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: radii.sm,
+        backgroundColor: '#F7F8FA'
+    },
+    uploadText: {
+        ...typography.bodyMedium,
+    }
 });
