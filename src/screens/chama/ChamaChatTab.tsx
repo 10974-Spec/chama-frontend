@@ -130,7 +130,7 @@ export default function ChamaChatTab() {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
 
-                attachmentUrl = getBaseUrl().replace('/api', '') + res.data.url;
+                attachmentUrl = res.data.url.startsWith('http') ? res.data.url : getBaseUrl().replace('/api', '') + res.data.url;
                 attachmentType = attachment.type;
             } catch (error) {
                 console.error('Failed to upload attachment', error);

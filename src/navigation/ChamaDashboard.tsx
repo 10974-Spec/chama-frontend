@@ -36,12 +36,13 @@ export default function ChamaDashboard({ route, navigation }: any) {
     const themeColor = PRIMARY_GREEN; // Universal green gradient theme used system-wide
 
     const isLocked = liveChama.subscriptionStatus === 'locked';
-    const isTrial = liveChama.subscriptionStatus === 'trial';
+    const isTrial = liveChama.subscriptionStatus === 'trial' || !liveChama.subscriptionStatus;
 
     // Calculate trial days left
     let trialDaysLeft = 0;
-    if (isTrial && liveChama.trialEndsAt) {
-        const diff = new Date(liveChama.trialEndsAt).getTime() - new Date().getTime();
+    if (isTrial) {
+        const endDate = liveChama.trialEndsAt ? new Date(liveChama.trialEndsAt) : new Date(new Date(liveChama.createdAt || Date.now()).getTime() + 7 * 24 * 60 * 60 * 1000);
+        const diff = endDate.getTime() - new Date().getTime();
         trialDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     }
 
@@ -74,6 +75,15 @@ export default function ChamaDashboard({ route, navigation }: any) {
                 </TouchableOpacity>
 
                 <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                    {isTrial && (
+                        <TouchableOpacity
+                            style={styles.topTrialBadge}
+                            onPress={() => { if (user?._id === liveChama.adminId) setPayVisible(true); }}
+                        >
+                            <Ionicons name="time-outline" size={14} color="#F57F17" />
+                            <Text style={styles.topTrialText}>{trialDaysLeft}d Trial</Text>
+                        </TouchableOpacity>
+                    )}
                     {user?._id === liveChama.adminId && (
                         <TouchableOpacity
                             style={styles.withdrawNavBtn}
@@ -95,18 +105,7 @@ export default function ChamaDashboard({ route, navigation }: any) {
                 <Text style={styles.profileTitle}>{liveChama.name}</Text>
                 <Text style={styles.profileSubtitle}>Ksh {liveChama.settings?.weeklyContribution || liveChama.amount || 0} · {liveChama.settings?.payoutFrequency || liveChama.frequency || 'Weekly'}</Text>
 
-                {isTrial && (
-                    <View style={styles.trialBanner}>
-                        <Text style={styles.trialText}>
-                            Trial ends in {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''}.
-                        </Text>
-                        {user?._id === liveChama.adminId && (
-                            <TouchableOpacity onPress={() => setPayVisible(true)}>
-                                <Text style={styles.upgradeText}>Upgrade</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
+
             </View>
 
             {isLocked ? (
@@ -209,27 +208,11 @@ const makeStyles = (colors: any) => StyleSheet.create({
         paddingHorizontal: 12, paddingVertical: 7,
     },
     withdrawNavBtnText: { fontSize: 12, fontWeight: '700', color: WHITE },
-    trialBanner: {
-        marginTop: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFF8E1',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#FFECB3'
+    topTrialBadge: {
+        flexDirection: 'row', alignItems: 'center', gap: 4,
+        backgroundColor: '#FFF8E1', borderRadius: 999,
+        paddingHorizontal: 10, paddingVertical: 6,
+        borderWidth: 1, borderColor: '#FFECB3'
     },
-    trialText: {
-        fontSize: 12,
-        color: '#F57F17',
-        fontWeight: '600',
-        marginRight: 6
-    },
-    upgradeText: {
-        fontSize: 12,
-        color: '#2A5C3F',
-        fontWeight: '800',
-        textDecorationLine: 'underline'
-    }
+    topTrialText: { fontSize: 11, fontWeight: '700', color: '#F57F17' },
 });

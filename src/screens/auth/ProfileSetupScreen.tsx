@@ -41,8 +41,7 @@ export default function ProfileSetupScreen({ navigation }: any) {
             const res = await api.post('/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const fullUrl = getBaseUrl().replace('/api', '') + res.data.url;
-
+            const fullUrl = res.data.url.startsWith('http') ? res.data.url : getBaseUrl().replace('/api', '') + res.data.url;
             if (type === 'avatar') setAvatarUrl(fullUrl);
             else setIdPhotoUrl(fullUrl);
         } catch (error: any) {

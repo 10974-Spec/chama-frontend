@@ -306,6 +306,7 @@ export default function ChamaFeedTab() {
                     keyExtractor={(item) => item._id || item.id || Math.random().toString()}
                     contentContainerStyle={styles.feedList}
                     showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
                     ListHeaderComponent={
                         <View style={styles.createPostCard}>
                             <TextInput

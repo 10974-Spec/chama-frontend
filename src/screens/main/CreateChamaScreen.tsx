@@ -55,7 +55,7 @@ export default function CreateChamaScreen({ navigation }: any) {
             const res = await api.post('/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const fullUrl = getBaseUrl().replace('/api', '') + res.data.url;
+            const fullUrl = res.data.url.startsWith('http') ? res.data.url : getBaseUrl().replace('/api', '') + res.data.url;
             setLogoUrl(fullUrl);
         } catch (error: any) {
             console.error('Failed to upload chama logo', error.response?.data || error.message);
