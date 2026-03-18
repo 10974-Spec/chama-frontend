@@ -3,7 +3,7 @@ import { useTheme } from '../../theme/ThemeContext';
 import {
     View, Text, TextInput, StyleSheet, TouchableOpacity,
     Animated, ScrollView, KeyboardAvoidingView, Platform, StatusBar,
-    ActivityIndicator, Alert, ImageBackground, Dimensions, Modal
+    ActivityIndicator, Alert, ImageBackground, Dimensions, Modal, Image
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,12 +132,7 @@ export default function LoginSignupScreen({ navigation }: any) {
                 <Animated.View style={[styles.inner, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
 
                     {/* ── Logo ── */}
-                    <View style={styles.logoWrap}>
-                        <View style={styles.logoCircle}>
-                            <Ionicons name="people" size={30} color="#fff" />
-                        </View>
-                        <Text style={styles.logoText}>CHAMA</Text>
-                    </View>
+                    <Image source={require('../../../assets/chama-logo.png')} style={styles.headerLogoImage} resizeMode="contain" />
 
                     {/* ── Title ── */}
                     <Text style={styles.title}>
@@ -331,25 +326,12 @@ const makeStyles = (colors: any) => StyleSheet.create({
         alignItems: 'center',
         marginBottom: 24,
     },
-    logoCircle: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: PRIMARY_GREEN,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 8,
-        shadowColor: PRIMARY_GREEN,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
-    },
-    logoText: {
-        fontSize: 13,
-        fontWeight: '800',
-        letterSpacing: 3.5,
-        color: '#1A1A1A',
+    headerLogoImage: {
+        width: 280,
+        height: 100,
+        alignSelf: 'center',
+        marginBottom: 10,
+        transform: [{ scale: 1.8 }],
     },
 
     bottomSection: {

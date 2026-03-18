@@ -10,6 +10,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { useRoute } from '@react-navigation/native';
+import Constants from 'expo-constants';
 import { colors } from '../../theme';
 import { useTheme } from '../../theme/ThemeContext';
 import api from '../../services/api';
@@ -72,6 +73,12 @@ function FeedCard({ item, chamaId, themeColor, onCommentPress }: any) {
     const handleDownload = async () => {
         if (!mediaUri) return;
         try {
+            const isExpoGo = Constants.appOwnership === 'expo';
+            if (isExpoGo) {
+                alert('Downloading media is limited in Expo Go. Use a development build for full media library access.');
+                return;
+            }
+
             const { status } = await MediaLibrary.requestPermissionsAsync();
             if (status !== 'granted') {
                 alert('Permission to access media library is required!');

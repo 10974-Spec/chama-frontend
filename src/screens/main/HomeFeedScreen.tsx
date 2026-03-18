@@ -211,12 +211,8 @@ export default function HomeFeedScreen({ navigation }: any) {
                 <>
                     {/* ── Fixed top header ── */}
                     <View style={styles.topHeader}>
-                        <View style={styles.logoRow}>
-                            <View style={styles.logoCircle}>
-                                <Ionicons name="people" size={18} color="#fff" />
-                            </View>
-                            <Text style={styles.logoText}>CHAMA</Text>
-                        </View>
+                        {/* Custom Logo Image */}
+                        <Image source={require('../../../assets/chama-logo.png')} style={styles.headerLogoImage} resizeMode="contain" />
                         <TouchableOpacity
                             style={styles.searchIconBtn}
                             onPress={() => navigation.navigate('Browse')}
@@ -545,6 +541,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F0F0F0',
         alignItems: 'center', justifyContent: 'center',
     },
+    headerLogoImage: { width: 180, height: 50, transform: [{ scale: 1.6 }] },
 
     /* ── Scroll ── */
     scroll: { flex: 1 },

@@ -193,6 +193,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
         backgroundColor: '#F2F2F2',
         alignItems: 'center', justifyContent: 'center',
     },
+    headerLogoImage: { width: 180, height: 50, transform: [{ scale: 1.6 }] },
     logoRow: {
         flexDirection: 'row',
         alignItems: 'center',

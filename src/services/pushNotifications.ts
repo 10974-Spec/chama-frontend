@@ -4,6 +4,12 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
+    const isExpoGo = Constants.appOwnership === 'expo';
+    if (isExpoGo) {
+        console.log('Push notifications not supported in Expo Go (SDK 53). Skipping registration.');
+        return null;
+    }
+
     let token = null;
 
     if (Platform.OS === 'android') {

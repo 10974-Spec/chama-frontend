@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../../theme/ThemeContext';
 import {
     View, Text, TextInput, StyleSheet, TouchableOpacity,
-    Animated, StatusBar, ActivityIndicator, Alert,
-    ImageBackground, KeyboardAvoidingView, Platform
+    ImageBackground, KeyboardAvoidingView, Platform, Image,
+    Animated, StatusBar, ActivityIndicator, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -45,8 +45,8 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
     }, []);
 
     const handleChange = (val: string, idx: number) => {
-    const { colors } = useTheme();
-    const styles = makeStyles(colors);
+        const { colors } = useTheme();
+        const styles = makeStyles(colors);
         const next = [...otp];
         next[idx] = val;
         setOtp(next);
@@ -101,12 +101,8 @@ export default function OTPVerificationScreen({ route, navigation }: any) {
                 <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={22} color="#1A1A1A" />
                 </TouchableOpacity>
-                <View style={styles.logoRow}>
-                    <View style={styles.logoCircle}>
-                        <Ionicons name="people" size={18} color="#fff" />
-                    </View>
-                    <Text style={styles.logoText}>CHAMA</Text>
-                </View>
+                {/* Custom Logo Image */}
+                <Image source={require('../../../assets/chama-logo.png')} style={styles.headerLogoImage} resizeMode="contain" />
                 <View style={{ width: 38 }} />
             </View>
 
@@ -238,22 +234,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
         backgroundColor: '#F5F5F5',
         alignItems: 'center', justifyContent: 'center',
     },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 7,
-    },
-    logoCircle: {
-        width: 34, height: 34, borderRadius: 17,
-        backgroundColor: PRIMARY_GREEN,
-        alignItems: 'center', justifyContent: 'center',
-    },
-    logoText: {
-        fontSize: 13,
-        fontWeight: '800',
-        letterSpacing: 3,
-        color: '#1A1A1A',
-    },
+    headerLogoImage: { width: 180, height: 50, transform: [{ scale: 1.6 }] },
 
     /* ── Content ── */
     content: {

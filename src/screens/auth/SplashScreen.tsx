@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
     View, Text, StyleSheet, Animated, StatusBar,
-    TouchableOpacity, ImageBackground, Dimensions
+    TouchableOpacity, ImageBackground, Dimensions, Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,8 +12,8 @@ const PRIMARY_GREEN_LIGHT = '#3A7D54';
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SplashScreen({ navigation }: any) {
-    
-    
+
+
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -34,13 +34,8 @@ export default function SplashScreen({ navigation }: any) {
 
                 {/* ── Top section: logo + text ── */}
                 <View style={styles.topSection}>
-                    {/* Logo row */}
-                    <View style={styles.logoRow}>
-                        <View style={styles.logoCircle}>
-                            <Ionicons name="people" size={22} color="#fff" />
-                        </View>
-                        <Text style={styles.logoLabel}>CHAMA</Text>
-                    </View>
+                    {/* Logo Image */}
+                    <Image source={require('../../../assets/chama-logo.png')} style={styles.headerLogoImage} resizeMode="contain" />
 
                     {/* Hero text */}
                     <Text style={styles.heroTitle}>Welcome to Chama</Text>
@@ -77,7 +72,8 @@ export default function SplashScreen({ navigation }: any) {
                         />
                         {/* Fade bottom of image into white */}
                         <LinearGradient
-                            colors={['transparent', 'rgba(255,255,255,0.7)', BG_WHITE]}
+                            colors={['transparent', 'rgba(255,255,255,0.6)', BG_WHITE, BG_WHITE]}
+                            locations={[0, 0.5, 0.9, 1]}
                             style={styles.imageFadeBottom}
                         />
                     </ImageBackground>
@@ -138,26 +134,7 @@ const styles = StyleSheet.create({
         backgroundColor: BG_WHITE,
         zIndex: 2,
     },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 20,
-    },
-    logoCircle: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: PRIMARY_GREEN,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    logoLabel: {
-        fontSize: 15,
-        fontWeight: '800',
-        letterSpacing: 3,
-        color: '#1A1A1A',
-    },
+    headerLogoImage: { width: 280, height: 90, marginBottom: 20, transform: [{ scale: 1.8 }] },
     heroTitle: {
         fontSize: 30,
         fontWeight: '800',
@@ -192,10 +169,10 @@ const styles = StyleSheet.create({
     },
     imageFadeBottom: {
         position: 'absolute',
-        bottom: 0,
+        bottom: -2,
         left: 0,
         right: 0,
-        height: '40%',
+        height: '60%',
     },
 
     /* ── Bottom section ── */

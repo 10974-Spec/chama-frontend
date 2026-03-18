@@ -52,7 +52,11 @@ export default function EditProfileScreen({ navigation }: any) {
             const res = await api.post('/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            const fullUrl = getBaseUrl().replace('/api', '') + res.data.url;
+            const returnedUrl = res.data.url;
+            const fullUrl = returnedUrl.startsWith('http')
+                ? returnedUrl
+                : getBaseUrl().replace('/api', '') + returnedUrl;
+
             if (type === 'avatar') setAvatarUrl(fullUrl);
             else setIdPhotoUrl(fullUrl);
         } catch (error: any) {
@@ -101,12 +105,8 @@ export default function EditProfileScreen({ navigation }: any) {
                     <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
                         <Ionicons name="chevron-back" size={22} color="#1A1A1A" />
                     </TouchableOpacity>
-                    <View style={styles.logoRow}>
-                        <View style={styles.logoCircle}>
-                            <Ionicons name="people" size={18} color="#fff" />
-                        </View>
-                        <Text style={styles.logoText}>CHAMA</Text>
-                    </View>
+                    {/* Custom Logo Image */}
+                    <Image source={require('../../../assets/chama-logo.png')} style={styles.headerLogoImage} resizeMode="contain" />
                     <View style={{ width: 38 }} />
                 </View>
 
@@ -290,22 +290,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
         backgroundColor: '#F2F2F2',
         alignItems: 'center', justifyContent: 'center',
     },
-    logoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 7,
-    },
-    logoCircle: {
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: PRIMARY_GREEN,
-        alignItems: 'center', justifyContent: 'center',
-    },
-    logoText: {
-        fontSize: 13,
-        fontWeight: '800',
-        letterSpacing: 3,
-        color: '#1A1A1A',
-    },
+    headerLogoImage: { width: 180, height: 50, transform: [{ scale: 1.6 }] },
 
     /* ── Title ── */
     title: {
