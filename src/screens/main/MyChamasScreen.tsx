@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../theme/ThemeContext';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, StatusBar, Image, ActivityIndicator, ImageBackground, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,15 +48,15 @@ export default function MyChamasScreen({ navigation }: any) {
     const [joinCode, setJoinCode] = useState('');
     const [joining, setJoining] = useState(false);
 
-    const fetchMyChamas = async () => {
-        setLoading(true);
+    const fetchMyChamas = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const res = await api.get('/chamas/my');
             setChamas(res.data);
         } catch (err) {
             console.error("Failed to fetch my chamas", err);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
@@ -70,7 +71,7 @@ export default function MyChamasScreen({ navigation }: any) {
             Alert.alert('Success!', 'You have successfully joined the Chama.');
             setJoinCode('');
             // refresh list
-            fetchMyChamas();
+            fetchMyChamas(true);
         } catch (error: any) {
             Alert.alert('Join Failed', error.response?.data?.message || 'Invalid or expired code.');
         } finally {
@@ -79,8 +80,14 @@ export default function MyChamasScreen({ navigation }: any) {
     };
 
     useEffect(() => {
-        fetchMyChamas();
+        fetchMyChamas(true);
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchMyChamas(false);
+        }, [])
+    );
 
     return (
         <View style={styles.container}>

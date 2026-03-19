@@ -48,6 +48,8 @@ export default function ChamaSettingsTab({ route }: any) {
     const [description, setDescription] = useState('');
     const [logoUrl, setLogoUrl] = useState('');
     const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [inviteCode, setInviteCode] = useState('');
+    const [regenerating, setRegenerating] = useState(false);
 
     // Financial Form fields
     const [autoPayoutEnabled, setAutoPayoutEnabled] = useState(false);
@@ -78,6 +80,7 @@ export default function ChamaSettingsTab({ route }: any) {
                     setWeeklyContribution(found.settings?.weeklyContribution?.toString() || '');
                     setPayoutFrequency(found.settings?.payoutFrequency || 'weekly');
                     setThemeColor(found.settings?.themeColor || '#2A5C3F');
+                    setInviteCode(found.inviteCode || '');
                 }
             } catch (err) {
                 console.error("Failed to load settings data", err);
@@ -149,6 +152,31 @@ export default function ChamaSettingsTab({ route }: any) {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleRegenerateInviteCode = async () => {
+        Alert.alert(
+            'Regenerate Invite Code',
+            'Are you sure? Members using the old code will no longer be able to join.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Regenerate', style: 'destructive', onPress: async () => {
+                        setRegenerating(true);
+                        try {
+                            const res = await api.patch(`/chamas/${chamaId}/invite-code`);
+                            setInviteCode(res.data.inviteCode);
+                            DeviceEventEmitter.emit('CHAMA_UPDATED', res.data.chama);
+                            showAlert('success', 'Code Updated', 'New invite code generated successfully.');
+                        } catch (error: any) {
+                            showAlert('error', 'Error', error.response?.data?.message || 'Failed to generate code.');
+                        } finally {
+                            setRegenerating(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleBroadcast = async () => {
@@ -252,6 +280,22 @@ export default function ChamaSettingsTab({ route }: any) {
                     <Text style={[styles.settingLabel, { marginLeft: 16 }]}>Description</Text>
                     <View style={[styles.inputWrap, { height: 80, alignItems: 'flex-start' }]}>
                         <TextInput style={[styles.input, { flex: 1, paddingTop: 12, textAlignVertical: 'top' }]} value={description} onChangeText={setDescription} multiline />
+                    </View>
+
+                    <View style={[styles.settingRow, { borderBottomWidth: 0, marginTop: 12, paddingHorizontal: 16, backgroundColor: '#FAFAFA', borderRadius: 8, marginHorizontal: 16, borderWidth: 1, borderColor: colors.border }]}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.settingLabel}>Invite Code</Text>
+                            <Text style={[{ marginTop: 4, paddingVertical: 8, color: colors.text.dark, letterSpacing: 2, fontSize: 18, fontWeight: '800' }]}>
+                                {inviteCode || '------'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#E8F5E9', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, justifyContent: 'center', borderColor: themeColor, borderWidth: 1 }}
+                            onPress={handleRegenerateInviteCode}
+                            disabled={regenerating}
+                        >
+                            {regenerating ? <ActivityIndicator size="small" color={themeColor} /> : <Text style={{ color: themeColor, fontWeight: '700' }}>Regenerate</Text>}
+                        </TouchableOpacity>
                     </View>
                 </View>
 
