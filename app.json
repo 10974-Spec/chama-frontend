@@ -37,6 +37,12 @@
         "projectId": "53c09567-23e8-4edc-b108-88e2067651db"
       }
     },
-    "owner": "devwithvison"
+    "owner": "devwithvison",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/53c09567-23e8-4edc-b108-88e2067651db"
+    }
   }
 }
